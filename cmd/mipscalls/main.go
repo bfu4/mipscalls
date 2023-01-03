@@ -31,6 +31,15 @@ func GetSyscall(id int) mipscalls.Syscall {
 	return syscalls[0]
 }
 
+func GetSyscallByName(name string) mipscalls.Syscall {
+	for i := 0; i < len(syscalls); i++ {
+		if syscalls[i].Name == name {
+			return syscalls[i]
+		}
+	}
+	return syscalls[0]
+}
+
 func main() {
 	var err error
 	if err = godotenv.Load(); err != nil {
@@ -42,6 +51,10 @@ func main() {
 			err error
 			id  int64
 		)
+		name := ctx.Query("name", "syscall")
+		if name != "" {
+			return ctx.JSON(GetSyscallByName(name))
+		}
 		number := ctx.Query("id", "4000")
 		if id, err = strconv.ParseInt(number, 10, 32); err == nil {
 			return ctx.JSON(GetSyscall(int(id)))

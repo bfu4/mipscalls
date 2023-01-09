@@ -1,18 +1,18 @@
 package main
 
 import (
+	"errors"
 	"github.com/bfu4/mipscalls"
 	"github.com/bfu4/mipscalls/api"
 	"github.com/gocarina/gocsv"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
-	"errors"
 	"os"
 	"os/signal"
 	"strconv"
 )
 
-const ErrNotFound error = errors.New("Syscall not found")
+var ErrNotFound error = errors.New("Syscall not found")
 
 var (
 	syscalls []mipscalls.Syscall
@@ -25,22 +25,22 @@ func init() {
 	}
 }
 
-func GetSyscall(id int) mipscalls.Syscall {
+func GetSyscall(id int) *mipscalls.Syscall {
 	for i := 0; i < len(syscalls); i++ {
 		if syscalls[i].Id == id {
-			return syscalls[i]
+			return &syscalls[i]
 		}
 	}
-	return syscalls[0]
+	return mipscalls.SyscallEmpty
 }
 
-func GetSyscallByName(name string) mipscalls.Syscall {
+func GetSyscallByName(name string) *mipscalls.Syscall {
 	for i := 0; i < len(syscalls); i++ {
 		if syscalls[i].Name == name {
-			return syscalls[i]
+			return &syscalls[i]
 		}
 	}
-	return syscalls[0]
+	return mipscalls.SyscallEmpty
 }
 
 func main() {
@@ -51,25 +51,24 @@ func main() {
 	srv := api.Get()
 	srv.AddRoute(api.DefineRoute("/", []api.Method{api.GET, api.POST, api.DELETE}, func(ctx *fiber.Ctx) error {
 		var (
+			syscall *mipscalls.Syscall
 			err error
 			id  int64
 		)
-		name := ctx.Query("name", "syscall")
+		name := ctx.Query("name", "")
 		if name != "" {
-			return ctx.JSON(GetSyscallByName(name))
+			if syscall = GetSyscallByName(name); syscall != mipscalls.SyscallEmpty {
+				return ctx.JSON(syscall)
+			}
 		}
 		number := ctx.Query("id", "-1")
 		if id, err = strconv.ParseInt(number, 10, 32); err == nil {
 			if id < 0 {
-				return ctx.JSON(struct{
-					Err error `json:"error"`
-				}{
-					Err: ErrNotFound,
-				})
+				return ErrNotFound
 			}
 			return ctx.JSON(GetSyscall(int(id)))
 		}
-		return nil
+		return ErrNotFound
 	}))
 	go srv.Start()
 

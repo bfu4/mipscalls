@@ -6,10 +6,13 @@ import (
 	"github.com/gocarina/gocsv"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	"errors"
 	"os"
 	"os/signal"
 	"strconv"
 )
+
+const ErrNotFound error = errors.New("Syscall not found")
 
 var (
 	syscalls []mipscalls.Syscall
@@ -55,8 +58,15 @@ func main() {
 		if name != "" {
 			return ctx.JSON(GetSyscallByName(name))
 		}
-		number := ctx.Query("id", "4000")
+		number := ctx.Query("id", "-1")
 		if id, err = strconv.ParseInt(number, 10, 32); err == nil {
+			if id < 0 {
+				return ctx.JSON(struct{
+					Err error `json:"error"`
+				}{
+					Err: ErrNotFound,
+				})
+			}
 			return ctx.JSON(GetSyscall(int(id)))
 		}
 		return nil

@@ -5,7 +5,7 @@ I keep getting annoyed looking at the mips syscall list. Made a small api for it
 ## CLI Script
 There is a cli script for accessing it [here](https://gist.github.com/bfu4/6d67123f5189deb95a0ae011ce9aed87)
 
-![cli script example](.github/example.png)
+![cli script example](example.png)
 
 ## Querying
 
